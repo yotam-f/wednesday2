@@ -18,6 +18,7 @@
     const passedSeconds = Math.max(0, Math.min(totalSeconds, nowSeconds - startSeconds));
     const remainingSeconds = totalSeconds - passedSeconds;
     const percent = passedSeconds / totalSeconds * 100;
+  document.title = `${percent.toFixed(3)}% | התקדמות היום`;
     const passedMinutes = Math.floor(passedSeconds / 60);
     const remainingMinutes = Math.ceil(remainingSeconds / 60);
 
