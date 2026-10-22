@@ -1,76 +1,137 @@
+
 (() => {
   const $ = id => document.getElementById(id);
-  function readTime(value) {
-    const [h, m] = value.split(":").map(Number);
+  const circumference = 2 * Math.PI * 90;
+
+  let start = localStorage.getItem('dayStart') || '08:15';
+  let end = localStorage.getItem('dayEnd') || '16:50';
+
+  $('startTime').value = start;
+  $('endTime').value = end;
+  $('ringValue').style.strokeDasharray = circumference;
+
+  function toMinutes(value) {
+    const [h, m] = value.split(':').map(Number);
     return h * 60 + m;
   }
-  let startMinutes = readTime(localStorage.getItem("startTime") || "08:15");
-  let endMinutes = readTime(localStorage.getItem("endTime") || "16:50");
 
-  function clock(minutes) {
-    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
-  }
-  function duration(minutes) {
-    const h = Math.floor(minutes / 60), m = minutes % 60;
-    if (!h) return `${m} דקות`;
-    if (!m) return h === 1 ? "שעה אחת" : `${h} שעות`;
-    return `${h === 1 ? "שעה" : `${h} שעות`} ו־${m} דקות`;
+  function fmtTime(mins) {
+    mins = Math.max(0, Math.floor(mins));
+    return `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}`;
   }
 
-  $("startTime").value = clock(startMinutes);
-  $("endTime").value = clock(endMinutes);
+  function durationWords(mins) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+
+    if (h && m) return `יום של ${h} שעות ו־${m} דקות`;
+    if (h) return `יום של ${h} שעות`;
+    return `יום של ${m} דקות`;
+  }
 
   function update() {
     const now = new Date();
-    const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    const startSeconds = startMinutes * 60, endSeconds = endMinutes * 60;
-    const totalSeconds = (endMinutes - startMinutes) * 60;
-    const passedSeconds = Math.max(0, Math.min(totalSeconds, nowSeconds - startSeconds));
-    const remainingSeconds = totalSeconds - passedSeconds;
-    const percent = passedSeconds / totalSeconds * 100;
+    const nowMins =
+      now.getHours() * 60 +
+      now.getMinutes() +
+      now.getSeconds() / 60;
 
-    document.title = `${percent.toFixed(3)}% | התקדמות היום`;
-    const passedMinutes = Math.floor(passedSeconds / 60);
-    const remainingMinutes = Math.ceil(remainingSeconds / 60);
-    $("percent").textContent = `${percent.toFixed(3)}%`;
-    $("fill").style.width = `${percent}%`;
-    $("progress").setAttribute("aria-valuenow", percent.toFixed(3));
-    $("passed").textContent = clock(passedMinutes);
-    $("remaining").textContent = clock(remainingMinutes);
-    $("totalLabel").textContent = `יום של ${duration(endMinutes - startMinutes)}`;
-    $("schedule").textContent = `היום: ${clock(startMinutes)}–${clock(endMinutes)}`;
+    const startMins = toMinutes(start);
+    const endMins = toMinutes(end);
+    const total = endMins - startMins;
 
-    if (nowSeconds < startSeconds) {
-      $("elapsed").textContent = "היום עדיין לא התחיל";
-      $("status").textContent = `מתחילים ב־${clock(startMinutes)}`;
-    } else if (nowSeconds >= endSeconds) {
-      $("elapsed").textContent = `עברו ${duration(endMinutes - startMinutes)}`;
-      $("status").textContent = "היום הושלם!";
+    $('dateLabel').textContent =
+      new Intl.DateTimeFormat('he-IL', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short'
+      }).format(now);
+
+    $('scheduleText').textContent = `${start}–${end}`;
+
+    if (total <= 0) {
+      $('percentage').textContent = '—';
+      $('centerCaption').textContent = 'בדקו את השעות';
+      $('elapsed').textContent = '—';
+      $('remaining').textContent = '—';
+      $('durationText').textContent =
+        'שעת הסיום צריכה להיות אחרי שעת ההתחלה';
+      $('ringValue').style.strokeDashoffset = circumference;
+      $('statusText').textContent =
+        'בחרו שעת סיום מאוחרת משעת ההתחלה כדי לחשב את ההתקדמות.';
+      $('statusMark').textContent = '!';
+      return;
+    }
+
+    const elapsed = Math.min(
+      total,
+      Math.max(0, nowMins - startMins)
+    );
+
+    const remaining = Math.max(0, endMins - nowMins);
+
+    const pct = Math.min(
+      100,
+      Math.max(0, (nowMins - startMins) / total * 100)
+    );
+
+    $('percentage').textContent = pct.toFixed(3);
+
+    $('ringValue').style.strokeDashoffset =
+      circumference * (1 - pct / 100);
+
+    $('elapsed').textContent = fmtTime(elapsed);
+    $('remaining').textContent = fmtTime(remaining);
+    $('durationText').textContent = durationWords(total);
+
+    if (nowMins < startMins) {
+      $('centerCaption').textContent = 'היום עוד מעט מתחיל';
+      $('statusText').textContent =
+        `היום שלך מתחיל ב־${start}. נשארו ${fmtTime(startMins - nowMins)} עד ההתחלה.`;
+      $('statusMark').textContent = '☀';
+    } else if (nowMins >= endMins) {
+      $('centerCaption').textContent = 'סיימת להיום!';
+      $('statusText').textContent =
+        'היום שהגדרת הסתיים. כל הכבוד על מה שהספקת — אפשר לנוח.';
+      $('statusMark').textContent = '✓';
     } else {
-      $("elapsed").textContent = `עברו ${duration(passedMinutes)}`;
-      $("status").textContent = "מתעדכן אוטומטית בכל שנייה";
+      $('centerCaption').textContent = 'מהיום כבר מאחוריך';
+      $('statusText').textContent =
+        `עברו ${pct.toFixed(1)}% מהיום שהגדרת. עוד ${fmtTime(remaining)} לסיום.`;
+      $('statusMark').textContent = '↗';
     }
   }
 
-  $("saveTimes").addEventListener("click", () => {
-    const s = $("startTime").value, e = $("endTime").value;
-    if (!s || !e) {
-      $("settingsMessage").textContent = "יש לבחור שעת התחלה ושעת סיום.";
+  $('saveTimes').addEventListener('click', () => {
+    const newStart = $('startTime').value;
+    const newEnd = $('endTime').value;
+
+    if (
+      !newStart ||
+      !newEnd ||
+      toMinutes(newEnd) <= toMinutes(newStart)
+    ) {
+      $('statusText').textContent =
+        'שעת הסיום חייבת להיות מאוחרת משעת ההתחלה.';
+      $('statusMark').textContent = '!';
       return;
     }
-    const newStart = readTime(s), newEnd = readTime(e);
-    if (newEnd <= newStart) {
-      $("settingsMessage").textContent = "שעת הסיום צריכה להיות מאוחרת משעת ההתחלה באותו יום.";
-      return;
-    }
-    startMinutes = newStart;
-    endMinutes = newEnd;
-    localStorage.setItem("startTime", s);
-    localStorage.setItem("endTime", e);
-    $("settingsMessage").textContent = `השעות נשמרו: ${clock(newStart)}–${clock(newEnd)}.`;
+
+    start = newStart;
+    end = newEnd;
+
+    localStorage.setItem('dayStart', start);
+    localStorage.setItem('dayEnd', end);
+
+    $('saveTimes').textContent = 'השעות נשמרו ✓';
+
     update();
+
+    setTimeout(() => {
+      $('saveTimes').textContent = 'שמירת שעות';
+    }, 1600);
   });
-  $("refresh").addEventListener("click", update);
+
   update();
   setInterval(update, 1000);
 })();
