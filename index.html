@@ -1,17 +1,92 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl"><head>
-    
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>היום שלך</title><link rel="stylesheet" href="style.css"><script src="script.js" defer></script>
-<link rel="shortcut icon" href="logotitle.png" type="image/x-icon">
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2563eb">
-<link rel="apple-touch-icon" href="logo.png">
-
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f6fa">
+  <meta name="description" content="היום שלך — מעקב פשוט אחר ההתקדמות ביום שלך">
+  <title>היום שלך</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        </div>
+        <div>
+          <h1>היום שלך</h1>
+          <p class="subtitle">כל יום מתקדם, רגע אחרי רגע</p>
+        </div>
+      </div>
+      <div class="today-pill" id="dateLabel">היום</div>
+    </header>
 
-<body><main class="card"><header><div class="clock">◷</div><h1>היום שלך</h1><p class="subtitle">כמה מהיום כבר עבר?</p><div class="total" id="totalLabel">יום של 8 שעות ו־35 דקות</div><p class="schedule" id="schedule">היום: 08:15–16:50</p></header>
-<div class="percent" id="percent">0.00%</div><div class="elapsed" id="elapsed">מחשב את ההתקדמות…</div><div class="track" id="progress" role="progressbar" aria-label="אחוז מהיום שעבר" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill" id="fill"></div></div>
-<section class="stats"><div class="stat"><div class="stat-icon">◷</div><div><strong id="passed">0:00</strong><span>עברו</span></div></div><div class="stat"><div class="stat-icon muted">⌛</div><div><strong id="remaining">8:35</strong><span>נותרו</span></div></div></section>
-<section class="settings"><h2>הגדרת שעות היום</h2><p>בחר את שעת ההתחלה ואת שעת הסיום שלך.</p><div class="time-fields"><label>שעת התחלה<input id="startTime" type="time" value="08:15"></label><label>שעת סיום<input id="endTime" type="time" value="16:50"></label><button class="primary" id="saveTimes">עדכון שעות</button></div><p class="hint" id="settingsMessage">ברירת המחדל היא 08:15–16:50.</p></section>
-<section class="controls"><div class="control-copy"><strong id="status">מתעדכן אוטומטית</strong><span>האחוזים מתעדכנים לפי השעון המקומי במחשב, בכל שנייה.</span></div><button class="secondary" id="refresh">עדכן עכשיו ↻</button></section><p class="foot">כל שנייה מקרבת אותך לסוף היום ✦</p></main></body></html>
+    <section class="hero" aria-labelledby="progressTitle">
+      <div class="hero-head">
+        <div class="hero-label" id="progressTitle">כמה מהיום כבר עבר?</div>
+        <div class="live"><span class="live-dot"></span> מתעדכן בזמן אמת</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="ring" role="img" aria-label="התקדמות היום">
+          <svg viewBox="0 0 200 200" aria-hidden="true">
+            <circle class="ring-track" cx="100" cy="100" r="90"></circle>
+            <circle class="ring-value" id="ringValue" cx="100" cy="100" r="90"></circle>
+          </svg>
+          <div class="ring-center">
+            <div class="percent"><span id="percentage">0.000</span><span class="percent-symbol">%</span></div>
+            <div class="center-caption" id="centerCaption">מתחילים את היום</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-foot">
+        <div class="schedule" id="scheduleText">08:15–16:50</div>
+        <div class="duration" id="durationText">יום של 8 שעות ו־35 דקות</div>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="נתוני היום">
+      <div class="stat-card">
+        <div class="stat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <div><div class="stat-label">זמן שעבר</div><div class="stat-value" id="elapsed">0:00</div></div>
+      </div>
+      <div class="stat-card remaining">
+        <div class="stat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3"/><circle cx="12" cy="12" r="7"/></svg>
+        </div>
+        <div><div class="stat-label">זמן שנותר</div><div class="stat-value" id="remaining">8:35</div></div>
+      </div>
+    </section>
+
+    <div class="section-title">
+      <h2>הגדרות היום</h2>
+      <span>אפשר לשנות בכל רגע</span>
+    </div>
+    <section class="settings">
+      <div class="time-grid">
+        <div>
+          <label class="field-label" for="startTime">שעת התחלה</label>
+          <input class="time-input" id="startTime" type="time" value="08:15" step="60">
+        </div>
+        <div>
+          <label class="field-label" for="endTime">שעת סיום</label>
+          <input class="time-input" id="endTime" type="time" value="16:50" step="60">
+        </div>
+      </div>
+      <button class="primary-btn" id="saveTimes">שמירת שעות</button>
+      <p class="settings-note">השעות נשמרות במכשיר שלך, כך שלא צריך להגדיר אותן מחדש בכל פתיחה.</p>
+    </section>
+
+    <div class="status" role="status" aria-live="polite">
+      <div class="status-mark" id="statusMark">↗</div>
+      <div id="statusText">האחוזים מתעדכנים אוטומטית בכל שנייה לפי השעון המקומי שלך.</div>
+    </div>
+    <div class="footer">נבנה כדי לעזור לך לראות את היום בפרספקטיבה ✦</div>
+  </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
